@@ -4,6 +4,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+/**
+ * Spring Boot entry point for the Trade Date Client Listing Position Provider
+ */
 @SpringBootApplication
 @Slf4j
 public class TradeDateClientListingPositionProviderApplication {
