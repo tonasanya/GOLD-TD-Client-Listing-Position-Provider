@@ -1,0 +1,13 @@
+spring.profile: dev
+
+
+input:
+  file.directory: "C:\Users\tonasanya\IdeaProjects\in\client_td_positions"
+  timezone.code: "UTC"
+
+---
+spring.profile: test
+
+input:
+  file.directory: "C:\Users\tonasanya\IdeaProjects\in\client_td_positions"
+  timezone.code: "UTC"
