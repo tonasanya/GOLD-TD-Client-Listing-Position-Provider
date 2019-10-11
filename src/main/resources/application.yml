@@ -1,6 +1,7 @@
 input:
   file:
     directory: 'src\main\resources\input'
+    date.format: 'YYYMMdd'
   timezone:
     code: 'Europe/London'
 
@@ -12,6 +13,7 @@ spring:
 input:
   file:
     directory: 'src\main\resources\input'
+    date.format: 'YYYMMdd'
   timezone:
     code: 'Europe/London'
 
@@ -23,5 +25,6 @@ spring:
 input:
   file:
     directory: 'src\test\resources\normalConditions'
+    date.format: 'YYYMMdd'
   timezone:
     code: 'US/Hawaii'

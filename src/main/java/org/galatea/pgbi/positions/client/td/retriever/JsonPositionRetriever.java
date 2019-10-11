@@ -9,6 +9,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.TimeZone;
 import lombok.RequiredArgsConstructor;
@@ -32,10 +33,12 @@ import org.springframework.stereotype.Component;
 public class JsonPositionRetriever implements Retriever {
 
   private final Translator<String, Pair<PositionKey, PositionValue>> jsonToPositionTranslator;
+  private final TimeZone sourcePositionTimezone;
   @Setter
   @Value("${input.file.directory}")
   private String directoryName;
-  private final TimeZone sourcePositionTimezone;
+  @Value("${input.file.date.format}")
+  private String dateFormat;
 
   @Override
   public Collection<Pair<PositionKey, PositionValue>> getPositions() throws Exception {
@@ -44,8 +47,13 @@ public class JsonPositionRetriever implements Retriever {
     LocalDate requestDate = getSourcePositionDate(sourcePositionTimezone);
     log.info("Request date = {}", requestDate);
 
-    log.debug("File directory location = {}", directoryName);
-    File directory = new File(directoryName);
+    String requestDateString = requestDate.format(DateTimeFormatter.ofPattern(dateFormat));
+    log.debug("Request date string = {}", requestDateString);
+
+    String directoryFullName = directoryName + "\\" + requestDateString;
+
+    log.info("File directory location = {}", directoryFullName);
+    File directory = new File(directoryFullName);
     File[] inputFiles = directory.listFiles();
     Collection<Pair<PositionKey, PositionValue>> positions = Sets.newHashSet();
 
@@ -65,7 +73,7 @@ public class JsonPositionRetriever implements Retriever {
     } else {
       log.error("inputFiles = {}", inputFiles);
       throw new IllegalStateException(
-          "The directory " + directoryName + " is empty or null. No positions retrieved for date "
+          "The directory " + directoryFullName + " is empty or null. No positions retrieved for date "
               + requestDate + ".");
     }
 

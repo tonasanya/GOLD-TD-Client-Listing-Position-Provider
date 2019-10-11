@@ -7,18 +7,22 @@ import static org.unitils.reflectionassert.ReflectionComparatorMode.LENIENT_ORDE
 import com.google.common.collect.Lists;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.TimeZone;
 import lombok.SneakyThrows;
 import org.galatea.pgbi.core.domain.Pair;
-import org.galatea.pgbi.core.test.ASpringTest;
+import org.galatea.pgbi.core.test.APowerMockSpringTest;
 import org.galatea.pgbi.core.translator.Translator;
 import org.galatea.pgbi.positions.client.td.configuration.Config;
 import org.galatea.pgbi.positions.client.td.domain.PositionKey;
 import org.galatea.pgbi.positions.client.td.domain.PositionValue;
+import org.junit.Before;
 import org.junit.Test;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.annotation.DirtiesContext;
@@ -30,7 +34,8 @@ import org.springframework.test.context.ContextConfiguration;
  */
 @ContextConfiguration(classes = {JsonPositionRetriever.class, Config.class})
 @ActiveProfiles(profiles = "test")
-public class JsonPositionRetrieverTest extends ASpringTest {
+@PrepareForTest({LocalDateTime.class, ZoneId.class, JsonPositionRetriever.class})
+public class JsonPositionRetrieverTest extends APowerMockSpringTest {
 
   @Autowired
   private JsonPositionRetriever jsonPositionRetriever;
@@ -38,6 +43,18 @@ public class JsonPositionRetrieverTest extends ASpringTest {
   private Translator<String, Pair<PositionKey, PositionValue>> jsonToPositionTranslator;
   @Autowired
   private TimeZone timeZone;
+
+  @Before
+  @SneakyThrows
+  public void setUp() {
+    PowerMockito.mockStatic(LocalDateTime.class);
+    ZoneId zoneId = TimeZone.getTimeZone("GMT").toZoneId();
+    ZonedDateTime mockTime = ZonedDateTime.of(2019, 10, 11, 9, 0, 0, 0, zoneId);
+    when(LocalDateTime.now()).thenReturn(mockTime.toLocalDateTime());
+
+    PowerMockito.mockStatic(ZoneId.class);
+    when(ZoneId.systemDefault()).thenReturn(TimeZone.getTimeZone("GMT").toZoneId());
+  }
 
   @Test(expected = IllegalStateException.class)
   @SneakyThrows
@@ -74,9 +91,9 @@ public class JsonPositionRetrieverTest extends ASpringTest {
   public void JsonPositionRetriever_NormalConditions_LoadPositions() {
     //given
     ZonedDateTime dateTime1 = ZonedDateTime.ofInstant(
-        Instant.ofEpochMilli(1570527347L), ZoneId.of("UTC"));
+        Instant.ofEpochMilli(1570527347L), TimeZone.getTimeZone("UTC").toZoneId());
     ZonedDateTime dateTime2 = ZonedDateTime.ofInstant(
-        Instant.ofEpochMilli(1570700147), ZoneId.of("UTC"));
+        Instant.ofEpochMilli(1570700147), TimeZone.getTimeZone("UTC").toZoneId());
     String counterparty = "FIRM";
     String timeZone = "UTC";
 
@@ -91,6 +108,8 @@ public class JsonPositionRetrieverTest extends ASpringTest {
     String account3 = "ECP3475";
     String ric3 = "FYT.9";
     Long qty3 = 8951L;
+
+    String ric4 = "FYT.11";
 
     PositionKey key1 =
         PositionKey.builder().accountId(account1).counterpartyId(counterparty)
@@ -117,8 +136,16 @@ public class JsonPositionRetrieverTest extends ASpringTest {
         .effectiveDate(dateTime2.toLocalDate()).quantity(qty3).timezone(timeZone).build();
     Pair<PositionKey, PositionValue> position3 = new Pair<>(key3, value3);
 
+    PositionKey key4 = PositionKey.builder().accountId(account3).counterpartyId(counterparty)
+        .effectiveDateTime(dateTime2).knowledgeDateTime(dateTime1).securityId(ric4).versionDate(
+            LocalDate.now()).versionNumber(1L)
+        .build();
+    PositionValue value4 = PositionValue.builder().businessDate(dateTime1.toLocalDate())
+        .effectiveDate(dateTime2.toLocalDate()).quantity(qty3).timezone(timeZone).build();
+    Pair<PositionKey, PositionValue> position4 = new Pair<>(key4, value4);
+
     Collection<Pair<PositionKey, PositionValue>> expectedPositions =
-        Lists.newArrayList(position1, position2, position3);
+        Lists.newArrayList(position1, position2, position3, position4);
 
     String jsonPosition1 =
         "{\"ric\":\"MYOS.5\",\"position_type\":\"TD\",\"knowledge_date\":1570527347,\"effective_date\":1570527347,\"account\":\"ICP5952\",\"direction\":\"Credit\",\"qty\":8799,\"purpose\":\"Outright\",\"time_stamp\":1570527347}";
@@ -129,9 +156,13 @@ public class JsonPositionRetrieverTest extends ASpringTest {
     String jsonPosition3 =
         "{\"ric\":\"FYT.9\",\"position_type\":\"TD\",\"knowledge_date\":1570527347,\"effective_date\":1570700147,\"account\":\"ECP3475\",\"direction\":\"Credit\",\"qty\":8951,\"purpose\":\"Outright\",\"time_stamp\":1570527347}";
 
+    String jsonPosition4 =
+        "{\"ric\":\"FYT.11\",\"position_type\":\"TD\",\"knowledge_date\":1570527347,\"effective_date\":1570700147,\"account\":\"ECP3475\",\"direction\":\"Credit\",\"qty\":8951,\"purpose\":\"Outright\",\"time_stamp\":1570527347}";
+
     when(jsonToPositionTranslator.translate(jsonPosition1)).thenReturn(position1);
     when(jsonToPositionTranslator.translate(jsonPosition2)).thenReturn(position2);
     when(jsonToPositionTranslator.translate(jsonPosition3)).thenReturn(position3);
+    when(jsonToPositionTranslator.translate(jsonPosition4)).thenReturn(position4);
 
     //when
     Collection<Pair<PositionKey, PositionValue>> positions = jsonPositionRetriever.getPositions();
