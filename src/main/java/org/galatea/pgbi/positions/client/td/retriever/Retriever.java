@@ -1,7 +1,7 @@
 package org.galatea.pgbi.positions.client.td.retriever;
 
 import java.util.Collection;
-import javafx.util.Pair;
+import org.galatea.pgbi.core.domain.Pair;
 import org.galatea.pgbi.positions.client.td.domain.PositionKey;
 import org.galatea.pgbi.positions.client.td.domain.PositionValue;
 

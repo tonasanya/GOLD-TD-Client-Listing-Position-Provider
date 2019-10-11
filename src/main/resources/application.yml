@@ -1,13 +1,27 @@
-spring.profile: dev
-
-
 input:
-  file.directory: "C:\Users\tonasanya\IdeaProjects\in\client_td_positions"
-  timezone.code: "UTC"
+  file:
+    directory: 'src\main\resources\input'
+  timezone:
+    code: 'Europe/London'
 
 ---
-spring.profile: test
+
+spring:
+  profiles: dev
 
 input:
-  file.directory: "C:\Users\tonasanya\IdeaProjects\in\client_td_positions"
-  timezone.code: "UTC"
+  file:
+    directory: 'src\main\resources\input'
+  timezone:
+    code: 'Europe/London'
+
+---
+
+spring:
+  profiles: test
+
+input:
+  file:
+    directory: 'src\test\resources\normalConditions'
+  timezone:
+    code: 'US/Hawaii'

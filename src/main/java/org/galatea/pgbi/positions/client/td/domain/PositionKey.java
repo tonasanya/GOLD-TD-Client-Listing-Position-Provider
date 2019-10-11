@@ -17,9 +17,6 @@ public class PositionKey {
   private final ZonedDateTime knowledgeDateTime;
   @NonNull
   private final ZonedDateTime effectiveDateTime;
-  //Source client identifier
-  @NonNull
-  private final String clientId;
   //Source account identifier
   @NonNull
   private final String accountId;

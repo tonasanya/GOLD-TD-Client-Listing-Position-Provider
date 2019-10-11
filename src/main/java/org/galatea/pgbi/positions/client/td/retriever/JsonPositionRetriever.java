@@ -7,12 +7,14 @@ import java.io.File;
 import java.io.FileReader;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.TimeZone;
-import javafx.util.Pair;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.galatea.pgbi.core.domain.Pair;
 import org.galatea.pgbi.core.exception.TranslationException;
 import org.galatea.pgbi.core.translator.Translator;
 import org.galatea.pgbi.positions.client.td.domain.PositionKey;
@@ -29,9 +31,10 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class JsonPositionRetriever implements Retriever {
 
-  private final Translator<String, Pair<PositionKey, PositionValue>> josnToPositionTranslator;
+  private final Translator<String, Pair<PositionKey, PositionValue>> jsonToPositionTranslator;
+  @Setter
   @Value("${input.file.directory}")
-  private final String directoryName;
+  private String directoryName;
   private final TimeZone sourcePositionTimezone;
 
   @Override
@@ -52,15 +55,17 @@ public class JsonPositionRetriever implements Retriever {
       for (File inputFile : inputFiles) {
         Collection<Pair<PositionKey, PositionValue>> positionsFromFile =
             processInputFile(inputFile);
-        log.debug("positions retrieved from the file {} are as follows: ", inputFile.getName(), positionsFromFile);
-        log.info("{} positions retrieved from the file {}", positionsFromFile.size(), inputFile.getName());
+        log.debug("positions retrieved from the file {} are as follows: ", inputFile.getName(),
+            positionsFromFile);
+        log.info("{} positions retrieved from the file {}", positionsFromFile.size(),
+            inputFile.getName());
         positions.addAll(positionsFromFile);
       }
 
     } else {
       log.error("inputFiles = {}", inputFiles);
       throw new IllegalStateException(
-          "The directory " + directoryName + " is empty or null. No positions retrieved for date"
+          "The directory " + directoryName + " is empty or null. No positions retrieved for date "
               + requestDate + ".");
     }
 
@@ -71,8 +76,10 @@ public class JsonPositionRetriever implements Retriever {
   //Get the date in the source timezone
   private LocalDate getSourcePositionDate(TimeZone timeZone) {
 
-    ZonedDateTime currentDateTime = LocalDateTime.now().atZone(timeZone.toZoneId());
-    log.debug("current date time at source timezone is {}", currentDateTime);
+    log.debug("Timezone = {}", timeZone);
+    ZonedDateTime localDateTime = LocalDateTime.now().atZone(ZoneId.systemDefault());
+    ZonedDateTime currentDateTime = localDateTime.withZoneSameInstant(timeZone.toZoneId());
+    log.info("current date time at source timezone is {}", currentDateTime);
 
     return LocalDate
         .of(currentDateTime.getYear(), currentDateTime.getMonth(), currentDateTime.getDayOfMonth());
@@ -87,7 +94,7 @@ public class JsonPositionRetriever implements Retriever {
         String line;
         while ((line = bufferedReader.readLine()) != null) {
           try {
-            positions.add(josnToPositionTranslator.translate(line));
+            positions.add(jsonToPositionTranslator.translate(line));
           } catch (TranslationException e) {
             log.warn("Failed to translate the line: " + line + " | Discarding position.");
           }
