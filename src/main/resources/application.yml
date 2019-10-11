@@ -1,0 +1,30 @@
+input:
+  file:
+    directory: 'src\main\resources\input'
+    date.format: 'YYYMMdd'
+  timezone:
+    code: 'Europe/London'
+
+---
+
+spring:
+  profiles: dev
+
+input:
+  file:
+    directory: 'src\main\resources\input'
+    date.format: 'YYYMMdd'
+  timezone:
+    code: 'Europe/London'
+
+---
+
+spring:
+  profiles: test
+
+input:
+  file:
+    directory: 'src\test\resources\normalConditions'
+    date.format: 'YYYMMdd'
+  timezone:
+    code: 'US/Hawaii'
